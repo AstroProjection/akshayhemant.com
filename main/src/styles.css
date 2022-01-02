@@ -195,7 +195,7 @@ section .content{
     width:100%;
     height:100%;
     background-color: skyblue;
-    opacity: 0.84;
+    opacity: 0.9;
     border-color:darkgreen;
     content:" ";
     z-index:-1;
@@ -436,9 +436,7 @@ section .content{
 #header{  
     position:relative;
     grid-area:header;
-
-    opacity:0.85;
-
+    opacity:0.9;
 }
 
 #about{
@@ -451,7 +449,6 @@ section .content{
     position:relative;
     grid-area:projects;
     border-color:brown;
-
     transition:all 0.6s; 
     
 }
@@ -554,7 +551,14 @@ section .content{
 .nav-list>li a:hover{
     color:greenyellow;
 }
-
+/* Explosion */
+.explosion{
+    background-color: black;
+    height:100%;
+    width:100%;
+    transition:1s all;
+    position: absolute;
+}
 
 /* starfield */
 #starfield{

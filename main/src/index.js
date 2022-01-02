@@ -3,7 +3,7 @@ import './styles.css';
 const starArr = [];
 const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d');
-const intervalTime = 100;
+const intervalTime = 150;
 
 function starFieldInit() {
 
@@ -80,7 +80,6 @@ function brightnessRandomizer(){
 
 function moveField() {
   let lastY = window.scrollY;
-  const canvas = document.getElementById('starfield');
   const moon = document.getElementById('moon');
   const sun = document.getElementById('sun');
   moon.style.transform = `translate(0,-${lastY / 4}px)`;
@@ -95,4 +94,14 @@ function positionSun() {
     sun.offsetParent.offsetTop;
   sun.style.top = calcTop + 'px';
 }
-window.onload = starFieldInit
+
+function explosionsInTheSky(){
+  document.body.style.display = 'grid';
+  let explosionMask = document.querySelector('.explosion');
+  setTimeout(()=>{
+    explosionMask.style.height = '0%'
+    starFieldInit();
+  },100)
+}
+
+window.onload = explosionsInTheSky
