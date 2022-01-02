@@ -85,7 +85,6 @@ function moveField() {
   const sun = document.getElementById('sun');
   moon.style.transform = `translate(0,-${lastY / 4}px)`;
   sun.style.transform = `translate(0,${lastY - lastY / 4}px)`;
-  canvas.style.transform = `translate(0,-${lastY / 8}px)`;
 }
 
 function positionSun() {
