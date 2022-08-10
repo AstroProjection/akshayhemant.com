@@ -10,7 +10,7 @@ function starFieldInit() {
   canvas.setAttribute('id', 'starfield');
   canvas.height = document.body.scrollHeight + document.body.scrollHeight / 12;
   canvas.width = screen.width;
-  document.body.append(canvas);
+  document.getElementById("main-content").append(canvas);
 
   const stars = 5000;
   for (let i = 0; i < stars; i++) {
