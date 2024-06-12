@@ -423,6 +423,7 @@ section .content{
 #header{  
     position:relative;
     grid-area:header;
+    height:60rem;
     opacity:0.9;
     box-shadow: 0 0 10px  #62cff4, 0 0 20px #2c67f2 ;
 }
