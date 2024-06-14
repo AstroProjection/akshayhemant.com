@@ -380,7 +380,7 @@ section .content{
     .projects__item{
         grid-template-areas: 'img img'
                               'info info';
-        width:90%;
+        width:100%;
         height:fit-content;
     }
 
@@ -396,7 +396,16 @@ section .content{
         width:5vw;
         height:5vw;
     }
-   
+    .main-container {
+        padding-top:4rem;
+    }
+    #footer .main-container {
+        padding-top: 2rem;
+        padding-bottom: 5rem;
+    }
+    #main-container {
+        grid-template-rows: repeat(4, 1fr) 10rem;
+    }
 }
 
 @media (max-width:350px){

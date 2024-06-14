@@ -31,6 +31,12 @@ function starFieldInit() {
   document.addEventListener("wheel", moveSunAndMoon, {
     passive: false,
   });
+  document.addEventListener("touchmove", moveSunAndMoon, {
+    passive: false,
+  });
+  document.addEventListener("scroll", moveSunAndMoon, {
+    passive: false,
+  });
   document.addEventListener("resize", positionSun);
 
   /// update star brightness
