@@ -1,16 +1,17 @@
-import './styles.css';
-
+import "./styles.css";
+import {
+  updateHorizontalPositionOfSunAndMoon,
+  updatePositionWithTime,
+} from "./utils/positioning";
+import { sun, moon, canvas, context } from "./element";
+import { COORDINATES_PARAMS, intervalTime } from "./constants";
 const starArr = [];
-const canvas = document.createElement('canvas');
-const context = canvas.getContext('2d');
-const intervalTime = 150;
 
 function starFieldInit() {
-
-  canvas.setAttribute('id', 'starfield');
-  canvas.height = document.body.scrollHeight + document.body.scrollHeight / 12;
+  canvas.setAttribute("id", "starfield");
+  canvas.height = document.body.scrollHeight + 500;
   canvas.width = screen.width;
-  document.getElementById("main-content").append(canvas);
+  document.body.append(canvas);
 
   const stars = 5000;
   for (let i = 0; i < stars; i++) {
@@ -24,34 +25,26 @@ function starFieldInit() {
     });
     context.beginPath();
     context.arc(x, y, radius, 0, 360);
-    context.fillStyle = 'rgb(255,255,255,0.8)';
+    context.fillStyle = "rgb(255,255,255,0.8)";
     context.fill();
   }
-  localStorage.setItem('starMap', JSON.stringify(starArr));
-  document.addEventListener("scroll", moveField);
-  document.addEventListener('resize', positionSun);
+  document.addEventListener("wheel", moveSunAndMoon, {
+    passive: false,
+  });
+  document.addEventListener("touchmove", moveSunAndMoon, {
+    passive: false,
+  });
+  document.addEventListener("scroll", moveSunAndMoon, {
+    passive: false,
+  });
+  document.addEventListener("resize", positionSun);
 
   /// update star brightness
   setInterval(brightnessRandomizer, intervalTime);
   positionSun();
 }
 
-function updatePositionWithTime(x, y) {
-  let t = 5; // (min for traverse)
-  let totalTime = t * 60 * (1000/intervalTime)
-  let delta = screen.width / totalTime; // distance to move to go from left to right 't' time
-  let newX = x + delta;
-  let newY = y + delta;
-  if (newX > canvas.width) {
-    newX = newX % canvas.width;
-  }
-  if (newY > canvas.height) {
-    newY = newY % canvas.height;
-  }
-  return { x: newX, y: newY };
-}
-
-function brightnessRandomizer(){
+function brightnessRandomizer() {
   let height = document.body.scrollHeight + document.body.scrollHeight / 12;
   let width = screen.width;
   context.clearRect(0, 0, width, height);
@@ -78,30 +71,54 @@ function brightnessRandomizer(){
   }
 }
 
-function moveField() {
-  let lastY = window.scrollY;
-  const moon = document.getElementById('moon');
-  const sun = document.getElementById('sun');
-  moon.style.transform = `translate(0,-${lastY / 4}px)`;
-  sun.style.transform = `translate(0,${lastY - lastY / 4}px)`;
+function handleWheelEvents(e) {
+  const { deltaX, deltaY } = e;
+  if (deltaX) {
+    // Find better way to disable mac side swipe
+    e.preventDefault();
+  }
+  updateHorizontalPositionOfSunAndMoon(-deltaX * 0.25, deltaY * 0.25);
+  const lastY = window.scrollY;
+  const moonY = -lastY / 4;
+  const sunY = lastY - lastY / 4;
+  moon.setAttribute(COORDINATES_PARAMS.Y, moonY);
+  sun.setAttribute(COORDINATES_PARAMS.Y, sunY);
+}
+
+function moveSunAndMoon(e) {
+  if (e) {
+    handleWheelEvents(e);
+  }
 }
 
 function positionSun() {
-  const sun = document.getElementById('sun');
-  const moon = document.getElementById('moon');
   const calcTop =
-    parseInt(document.defaultView.getComputedStyle(moon, '')['top'] || 0) -
+    parseInt(document.defaultView.getComputedStyle(moon, "")["top"] || 0) -
     sun.offsetParent.offsetTop;
-  sun.style.top = calcTop + 'px';
+  sun.style.top = calcTop + "px";
+  const lastY = window.scrollY;
+  const moonY = -lastY / 4;
+  const sunY = lastY - lastY / 4;
+  moon.setAttribute(COORDINATES_PARAMS.Y, moonY);
+  sun.setAttribute(COORDINATES_PARAMS.Y, sunY);
+  updateHorizontalPositionOfSunAndMoon(1, 0);
 }
 
-function explosionsInTheSky(){
-  document.body.style.display = 'grid';
-  let explosionMask = document.querySelector('.explosion');
-  setTimeout(()=>{
-    explosionMask.style.height = '0%'
-    starFieldInit();
-  },100)
+function initializeSceneUpdates() {
+  setInterval(() => {
+    updateHorizontalPositionOfSunAndMoon(1, 0);
+  }, 100);
 }
 
-window.onload = explosionsInTheSky
+function explosionsInTheSky() {
+  starFieldInit();
+  moveSunAndMoon();
+  initializeSceneUpdates();
+
+  setTimeout(() => {
+    let explosionMask = document.querySelector(".explosion");
+    explosionMask.style.height = "0%";
+  }, 100);
+}
+
+window.onload = explosionsInTheSky;
