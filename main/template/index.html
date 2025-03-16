@@ -267,6 +267,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      box-sizing: border-box;
       z-index: 100;
       transition: background 0.3s ease;
     }
@@ -340,7 +341,32 @@
       z-index: 100;
       transition: opacity 0.3s ease;
     }
-    
+
+    /* Social media footer styling */
+    .social-footer {
+      padding: 20px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.9);
+      position: relative;
+      z-index: 1;
+    }
+
+    .social-links a {
+      margin: 0 15px;
+      display: inline-block;
+      transition: transform 0.3s ease;
+    }
+
+    .social-links a:hover {
+      transform: translateY(-5px);
+    }
+
+    .social-links svg {
+      width: 32px;
+      height: 32px;
+      fill: #FFC107; /* Adjust the icon color as desired */
+    }
+        
     /* Responsive styles */
     @media (max-width: 768px) {
       .hero h1 {
@@ -378,8 +404,8 @@
     <a href="#body" class="logo">Akshay Hemant Kumar</a>
     <div class="nav-links">
       <a href="#about">About</a>
-      <a href="#projects">Projects</a>
-      <a href="#contact">Contact</a>
+      <a target="_blank" href="assets/resume.pdf">Resume</a>
+      <a href="#social">Social</a>
     </div>
   </nav>
   
@@ -407,23 +433,23 @@
           <div class="about-image" style="background-image: url('../assets/profile-pic.jpg');"></div>
           <div class="about-text">
             <h2>About Me</h2>
-            <p>Hello! I'm a passionate developer with a love for creating interactive experiences and beautiful visualizations. With expertise in JavaScript, WebGL, and creative coding, I build digital experiences that combine art and technology.</p>
-            <p>My background in [your background] has given me a unique perspective on problem-solving and innovation. I'm constantly exploring new technologies and pushing the boundaries of what's possible on the web.</p>
-            <p>When I'm not coding, you can find me [your hobbies/interests].</p>
+            <p>Hello! I'm a passionate developer with a love for creating interactive experiences and beautiful visualizations. With expertise in JavaScript, and creative coding, I build digital experiences that combine art and technology.</p>
+            <p>Gaming has been a lifelong passion, profoundly shaping my development style and sharpening my problem-solving skills. The immersive, strategic experiences in the gaming world have given me a keen eye for UX, inspiring me to create intuitive, engaging, and user-centric web experiences.</p>
+            <p>When I'm not coding, you can find playing with my 7 dogs.</p>
           </div>
         </div>
       </div>
     </section>
     
     <!-- Projects section -->
-    <section class="content-section" id="projects">
+    <!-- <section class="content-section" id="projects">
       <div class="section-inner">
         <h2>My Projects</h2>
         <p>Here are some of the projects I've worked on recently. Each one represents a unique challenge and learning opportunity.</p>
         
         <div class="project-grid">
           <!-- Project 1 -->
-          <div class="project-card">
+          <!-- <div class="project-card">
             <div class="project-image" style="background-image: url('https://via.placeholder.com/350x200');"></div>
             <div class="project-content">
               <h3>Solar System Visualization</h3>
@@ -433,54 +459,54 @@
           </div>
           
           <!-- Project 2 -->
-          <div class="project-card">
+          <!-- <div class="project-card">
             <div class="project-image" style="background-image: url('https://via.placeholder.com/350x200');"></div>
             <div class="project-content">
               <h3>Data Visualization Dashboard</h3>
               <p>A responsive dashboard for visualizing complex datasets, built with D3.js and React, featuring interactive charts and filters.</p>
               <a href="#" class="project-link">View Project</a>
             </div>
-          </div>
+          </div> -->
           
           <!-- Project 3 -->
-          <div class="project-card">
+          <!-- <div class="project-card">
             <div class="project-image" style="background-image: url('https://via.placeholder.com/350x200');"></div>
             <div class="project-content">
               <h3>AI-Powered Web Application</h3>
               <p>A web application that leverages machine learning to provide personalized recommendations and insights to users.</p>
               <a href="#" class="project-link">View Project</a>
             </div>
-          </div>
-        </div>
+          </div> -->
+        <!-- </div> 
       </div>
-    </section>
+    </section>  -->
     
-    <!-- Contact section -->
-    <section class="content-section" id="contact">
-      <div class="section-inner">
-        <h2>Get In Touch</h2>
-        <p>Interested in working together? Feel free to reach out using the form below or connect with me on social media.</p>
-        
-        <div class="contact-form">
-          <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" id="name" placeholder="Your name">
-          </div>
-          
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" placeholder="Your email">
-          </div>
-          
-          <div class="form-group">
-            <label for="message">Message</label>
-            <textarea id="message" placeholder="Your message"></textarea>
-          </div>
-          
-          <button class="submit-btn">Send Message</button>
-        </div>
-      </div>
-    </section>
+    <!-- Replace the contact section with social media links -->
+<footer class="social-footer" id="social">
+  <div class="social-links">
+    <!-- LinkedIn Icon -->
+    <a href="https://www.linkedin.com/in/akshayhemant" target="_blank" aria-label="LinkedIn">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+        <title>LinkedIn</title>
+        <path d="M100.28 448H7.4V148.9h92.88zM53.79 108.1a53.69 53.69 0 1 1 53.69-53.69A53.69 53.69 0 0 1 53.79 108.1zM447.9 448h-92.68V302.4c0-34.7-12.4-58.4-43.26-58.4-23.63 0-37.6 15.9-43.84 31.3-2.26 5.5-2.82 13.2-2.82 21V448h-92.7V148.9h92.7v40.8a102.14 102.14 0 0 1 92.06-50.8c67.32 0 117.74 43.9 117.74 138.3V448z"/>
+      </svg>
+    </a>
+    <!-- GitHub Icon -->
+    <a href="https://github.com/astroprojection" target="_blank" aria-label="GitHub">
+      <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <title>GitHub</title>
+        <path d="M12 .297a12 12 0 0 0-3.79 23.4c.6.113.82-.26.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.235 1.84 1.235 1.07 1.834 2.807 1.304 3.492.997.108-.776.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.47-2.38 1.235-3.22-.135-.303-.54-1.52.105-3.176 0 0 1.005-.322 3.3 1.23a11.5 11.5 0 0 1 3-.405 11.5 11.5 0 0 1 3 .405c2.28-1.552 3.285-1.23 3.285-1.23.645 1.656.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.435.375.825 1.102.825 2.222 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57A12.006 12.006 0 0 0 12 .297"/>
+      </svg>
+    </a>
+    <!-- X Icon -->
+    <a href="https://x.com/clawster" target="_blank" aria-label="X">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <title>X</title>
+        <path d="M23.954 4.569c-.885.389-1.83.654-2.825.775a4.932 4.932 0 0 0 2.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 0 0-8.384 4.482A13.978 13.978 0 0 1 1.671 3.149 4.822 4.822 0 0 0 .964 5.64a4.903 4.903 0 0 0 2.188 4.096 4.904 4.904 0 0 1-2.228-.616c-.054 2.281 1.581 4.415 3.949 4.89a4.996 4.996 0 0 1-2.224.084 4.92 4.92 0 0 0 4.6 3.417 9.867 9.867 0 0 1-6.102 2.104c-.396 0-.788-.023-1.17-.067a13.945 13.945 0 0 0 7.557 2.212c9.054 0 14-7.496 14-13.986 0-.209 0-.42-.015-.63a9.936 9.936 0 0 0 2.46-2.548l-.047-.02z"/>
+      </svg>
+    </a>
+  </div>
+</footer>
   </div>
   
   <!-- Controls for solar system -->
@@ -515,7 +541,7 @@
     // Content elements
     const heroTitle = document.getElementById('heroTitle');
     const heroSubtitle = document.getElementById('heroSubtitle');
-    const contentContainer = document.querySelector('.content-container');
+    // const contentContainer = document.querySelector('.content-container');
     const mainNav = document.getElementById('mainNav');
     const controls = document.getElementById('controls');
     const scrollBlur = document.getElementById('scrollBlur');
@@ -1351,35 +1377,6 @@
       });
     }
     
-    // Form submission handling
-    function setupContactForm() {
-      const contactForm = document.querySelector('.contact-form');
-      const submitBtn = contactForm.querySelector('.submit-btn');
-      
-      submitBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        const nameInput = document.getElementById('name');
-        const emailInput = document.getElementById('email');
-        const messageInput = document.getElementById('message');
-        
-        // Simple validation
-        if (!nameInput.value || !emailInput.value || !messageInput.value) {
-          alert('Please fill in all fields');
-          return;
-        }
-        
-        // Here you would typically send the form data to a server
-        // For this example, we'll just show a success message
-        contactForm.innerHTML = `
-          <div style="text-align: center; padding: 30px;">
-            <h3>Thank you for your message!</h3>
-            <p>I'll get back to you as soon as possible.</p>
-          </div>
-        `;
-      });
-    }
-    
     // Set up event listeners
     document.addEventListener('DOMContentLoaded', () => {
       const toggleBtn = document.getElementById('toggleAnimation');
@@ -1413,9 +1410,6 @@
       
       // Set up smooth scrolling
       setupSmoothScrolling();
-      
-      // Set up contact form
-      setupContactForm();
       
       // Add hover effect to navigation when it's faded
       mainNav.addEventListener('mouseenter', () => {
