@@ -19,7 +19,6 @@ module.exports = {
         },
       },
       {
-        entry: './src/styles.css',
         test: /\.css$/,
         use: [
           "style-loader", // 2.injects file to dom
