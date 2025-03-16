@@ -624,7 +624,7 @@
     // Real-world relative speeds - using more accurate astronomical values
     const baseOrbitSpeed = 0.0041; // Degrees per frame (approximately 1 degree per day)
     // Earth rotates 365.25 times for each orbit around the sun
-    const baseRotationSpeed = baseOrbitSpeed * 365.25; // Degrees per frame for earth's rotation
+    const baseRotationSpeed = baseOrbitSpeed * 24; // Degrees per frame for earth's rotation
     let speedMultiplier = 1; // Starting at 1x speed
     let rayInterval = 1; // Angle between rays in degrees
     
@@ -811,8 +811,9 @@
       
       // Calculate initial ellipse parameters based on scroll
       const baseEccentricity = 0.0167; // Earth's actual orbital eccentricity
-      const scrollEccentricity = Math.min(0.2, scrollY * parallaxFactor / earthOrbitRadius);
-      const eccentricity = baseEccentricity + scrollEccentricity;
+      const maxScrollEccentricity = 5; // Maximum eccentricity based on scroll
+      const scrollEccentricity = Math.min(maxScrollEccentricity, scrollY * parallaxFactor / earthOrbitRadius);
+      const eccentricity = baseEccentricity + scrollEccentricity; // Update eccentricity based on scroll
       const semiMajorAxis = earthOrbitRadius;
       const semiMinorAxis = semiMajorAxis * Math.sqrt(1 - eccentricity * eccentricity);
       
@@ -822,8 +823,8 @@
         // Real astronomical parameters
         axialTilt: 23.5, // Earth's axial tilt in degrees
         orbitalInclination: 0, // Earth's orbital inclination (simplified)
-        x: centerX + semiMajorAxis, // Initial position (0 degrees)
-        y: centerY, // Initial position on elliptical orbit
+        x: centerX + semiMajorAxis * Math.cos(degToRad(rotationAngle)), // Initial position (0 degrees)
+        y: centerY + semiMinorAxis * Math.sin(degToRad(rotationAngle)), // Initial position on elliptical orbit
         rotationAngle: 0, // Initial rotation angle
         seasonalAngle: 0 // Added for seasonal effect
       };
