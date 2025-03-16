@@ -1,5 +1,6 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require('path');
+
 module.exports = {
   mode: process.env.NODE_ENV || "development",
   entry: "./src/index.js", /// relative path to entry of proj
@@ -18,6 +19,7 @@ module.exports = {
         },
       },
       {
+        entry: './src/styles.css',
         test: /\.css$/,
         use: [
           "style-loader", // 2.injects file to dom
