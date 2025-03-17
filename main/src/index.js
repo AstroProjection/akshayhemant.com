@@ -122,7 +122,7 @@
  // Real-world relative speeds - using more accurate astronomical values
  const baseOrbitSpeed = 0.0041; // Degrees per frame (approximately 1 degree per day)
  // Earth rotates 365.25 times for each orbit around the sun
- const baseRotationSpeed = baseOrbitSpeed * 24; // Degrees per frame for earth's rotation
+ const baseRotationSpeed = baseOrbitSpeed * 7.5; // Degrees per frame for earth's rotation
  let speedMultiplier = 1; // Starting at 1x speed
  let rayInterval = 1; // Angle between rays in degrees
  
@@ -352,7 +352,7 @@
    const parallaxFactor = 0.2;
    
    // Initial earth orbit radius
-   const earthOrbitRadius = Math.min(canvas.width, canvas.height) * 0.3;
+   const earthOrbitRadius = Math.min(canvas.width, canvas.height) * 0.4;
    
    // Calculate initial ellipse parameters based on scroll
    const baseEccentricity = 0.0167; // Earth's actual orbital eccentricity
