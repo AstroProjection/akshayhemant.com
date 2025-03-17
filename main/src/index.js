@@ -364,7 +364,7 @@
    
    earth = {
      orbitRadius: earthOrbitRadius,
-     r: Math.min(canvas.width, canvas.height) * 0.075, // Base radius
+     r: Math.min(canvas.width, canvas.height) * 0.05, // Base radius
      currentSize: Math.min(canvas.width, canvas.height) * 0.075, // Initial current size
      // Real astronomical parameters
      axialTilt: 23.5, // Earth's axial tilt in degrees
