@@ -158,106 +158,153 @@
  // Generate rays at specified intervals
  function generateRays() {
    rays = [];
+   // Increase density of rays for better coverage
+   rayInterval = 0.3; // Higher density to eliminate gaps
    const numRays = Math.floor(360 / rayInterval);
    
+   // Create an array to store ray directions for better distribution
+   const rayDirections = [];
+   
+   // First generate evenly distributed ray directions
    for (let i = 0; i < numRays; i++) {
      const angleDeg = i * rayInterval;
      const angleRad = degToRad(angleDeg);
      
-     // Direction vector from the Sun (unchanged)
+     // Direction vector from the Sun
      const dir = {
        x: Math.cos(angleRad),
        y: Math.sin(angleRad)
      };
      
-     // Start point is now on the periphery of the sun instead of center
-     const start = {
-       x: sun.x + dir.x * sun.r, // Start from sun's surface
-       y: sun.y + dir.y * sun.r
-     };
+     // Normalize direction vector
+     const magnitude = Math.sqrt(dir.x * dir.x + dir.y * dir.y);
+     if (magnitude > 0) {
+       dir.x /= magnitude;
+       dir.y /= magnitude;
+     }
      
-     // Create ray with initial end point (will be updated)
-     // Assign a fixed base opacity with a small random component
-     const baseOpacity = 0.2 + 0.05 * Math.random();
-     rays.push({
-       start: start,
-       dir: dir,
-       end: { x: start.x, y: start.y }, // Initial value, will be updated
+     rayDirections.push({
        angle: angleDeg,
-       baseOpacity: baseOpacity,
-       phase: Math.random() * Math.PI * 2, // Random starting phase for smooth animation
-       color: `rgba(255, 215, 0, ${baseOpacity})` 
+       dir: dir
      });
    }
+   
+   
+   // Now create rays with varied properties for natural appearance
+   for (const rayDir of rayDirections) {
+     // Start point is on the periphery of the sun
+     const start = {
+       x: sun.x + rayDir.dir.x * sun.r,
+       y: sun.y + rayDir.dir.y * sun.r
+     };
+     
+     // Create ray with varied properties for natural appearance
+     const baseOpacity = 0.15 + 0.1 * Math.random(); // Reduced base opacity
+     const baseLength = 0.8 + 0.4 * Math.random(); // Variable ray length
+     const shimmerSpeed = 0.5 + Math.random() * 1.5; // Variable shimmer speed
+     const shimmerAmount = 0.03 + Math.random() * 0.08; // Variable shimmer amount
+     
+     rays.push({
+       start: start,
+       dir: rayDir.dir,
+       end: { x: start.x + rayDir.dir.x * canvas.width * baseLength, 
+              y: start.y + rayDir.dir.y * canvas.width * baseLength },
+       angle: rayDir.angle,
+       baseOpacity: baseOpacity,
+       currentOpacity: baseOpacity,
+       phase: Math.random() * Math.PI * 2, // Random starting phase
+       shimmerSpeed: shimmerSpeed,
+       shimmerAmount: shimmerAmount,
+       baseLength: baseLength,
+       color: `rgba(255, 215, 0, ${baseOpacity})`
+     });
+   }
+   
+   // Sort rays by angle for consistent rendering
+   rays.sort((a, b) => a.angle - b.angle);
  }
  
  // Generate stars for the background
  function generateStars() {
    stars = [];
-   const numStars = Math.floor(canvas.width * canvas.height / 2000); // Adjust density as needed
+   const numStars = Math.floor(canvas.width * canvas.height / 1800); // Slightly increased density
    
    for (let i = 0; i < numStars; i++) {
      // Random position across the entire canvas
      const x = Math.random() * canvas.width;
      const y = Math.random() * canvas.height;
      
-     // Random size between 0.5 and 2.5, with occasional larger stars
-     const size = Math.random() > 0.97 ? 
-                 2 + Math.random() * 1.5 : // 3% chance of larger star (2-3.5)
-                 0.5 + Math.random() * 1.5; // Normal stars (0.5-2)
+     // Enhanced star size distribution with more variation
+     let size;
+     const sizeDist = Math.random();
+     if (sizeDist > 0.97) { // 3% chance of large star
+       size = 2 + Math.random() * 2; // 2-4 pixels
+     } else if (sizeDist > 0.85) { // 12% chance of medium star
+       size = 1.2 + Math.random() * 0.8; // 1.2-2 pixels
+     } else { // 85% chance of small star
+       size = 0.4 + Math.random() * 0.8; // 0.4-1.2 pixels
+     }
      
-     // Assign a relative distance (smaller stars are generally further away)
-     // This affects parallax movement
+     // More varied distance assignment for better parallax
      const distance = size < 1.2 ? 
-                    2 + Math.random() * 3 : // Distant stars (smaller)
-                    0.8 + Math.random() * 1.2; // Closer stars (larger)
+                     2 + Math.random() * 3 : // Distant stars (smaller)
+                     0.7 + Math.random() * 1; // Closer stars (larger)
      
-     // Random base brightness between 0.3 and 0.9
-     const baseBrightness = 0.3 + Math.random() * 0.6;
+     // Enhanced brightness properties
+     const baseBrightness = 0.3 + Math.random() * 0.65;
      
-     // Random flickering speed - more varied now
-     const flickerSpeed = 0.3 + Math.random() * 3;
+     // More varied flickering speeds
+     const flickerSpeed = 0.2 + Math.random() * 4;
      
-     // Random phase for smooth animation
+     // Random phases for animation offset
      const phase = Math.random() * Math.PI * 2;
-     
-     // Additional phases for multi-wave twinkling
      const phase2 = Math.random() * Math.PI * 2;
      const phase3 = Math.random() * Math.PI * 2;
      
-     // Random twinkling pattern type (0-3)
+     // Enhanced twinkling patterns (0-3)
      const twinklePattern = Math.floor(Math.random() * 4);
      
-     // Random color (white to slightly blue or yellow)
-     const hue = Math.random() > 0.7 ? 
-                 (Math.random() > 0.5 ? 210 + Math.random() * 30 : 40 + Math.random() * 20) : 
-                 0; // 70% white, 15% blue-ish, 15% yellow-ish
-     const saturation = hue === 0 ? 0 : 20 + Math.random() * 30;
+     // Enhanced color distribution
+     let hue, saturation;
+     const colorDist = Math.random();
+     if (colorDist > 0.8) { // 20% colored stars
+       if (colorDist > 0.9) { // 10% blue stars
+         hue = 200 + Math.random() * 40; // Blue range
+         saturation = 20 + Math.random() * 40;
+       } else { // 10% yellow/orange stars
+         hue = 30 + Math.random() * 30; // Yellow-orange range
+         saturation = 30 + Math.random() * 50;
+       }
+     } else { // 80% white stars
+       hue = 0;
+       saturation = 0;
+     }
      
-     // Add glow effect to some stars
-     const hasGlow = Math.random() > 0.85; // 15% chance of having glow
+     // Enhanced glow effect distribution
+     const hasGlow = Math.random() > 0.8; // 20% chance of having glow
      
-     // Add movement properties - smaller stars move more
-     const moveSpeed = 0.03 + Math.random() * 0.15; // Varied movement speeds
-     const moveAngle = Math.random() * Math.PI * 2; // Random direction
+     // Enhanced movement properties
+     const moveSpeed = 0.03 + Math.random() * 0.2;
+     const moveAngle = Math.random() * Math.PI * 2;
      
-     // Smaller stars move more, larger stars move less
+     // More varied movement radius based on size and distance
+     const baseMoveRadius = 1.5 + Math.random() * 2.5;
      const moveRadius = size < 1.5 ? 
-                       1 + Math.random() * 2 : // Smaller stars move more
-                       0.3 + Math.random() * 0.7; // Larger stars move less
-                       
-     const movePhase = Math.random() * Math.PI * 2; // Random starting position in movement cycle
+                        baseMoveRadius * 1.2 : // Smaller stars move more
+                        baseMoveRadius * 0.5; // Larger stars move less
      
-     // Add a secondary movement for some stars to create more complex patterns
-     const hasSecondaryMovement = Math.random() > 0.7; // 30% chance
-     const secondaryMoveSpeed = 0.01 + Math.random() * 0.05; // Very slow secondary movement
-     const secondaryMoveRadius = 0.2 + Math.random() * 0.8; // Small secondary radius
-     const secondaryMovePhase = Math.random() * Math.PI * 2; // Random phase
+     const movePhase = Math.random() * Math.PI * 2;
+     
+     // Enhanced secondary movement
+     const hasSecondaryMovement = Math.random() > 0.5; // 50% chance (increased)
+     const secondaryMoveSpeed = 0.01 + Math.random() * 0.07;
+     const secondaryMoveRadius = 0.3 + Math.random() * 1.2; // Increased radius
+     const secondaryMovePhase = Math.random() * Math.PI * 2;
      
      stars.push({
        x,
        y,
-       originalX: x, // Store original position for movement calculations
+       originalX: x,
        originalY: y,
        size,
        baseBrightness,
@@ -327,7 +374,12 @@
      rotationAngle: 0, // Initial rotation angle
      seasonalAngle: 0, // Added for seasonal effect
      currentInclination: 0, // Current inclination of orbit
-     behindSun: false // Added for z-index tracking
+     behindSun: false, // Added for z-index tracking
+     depthFactor: 0, // Added for 3D position calculation
+     movingDirection: 0, // Added for direction tracking
+     prevX: 0, // Added for previous position tracking
+     prevY: 0, // Added for previous position tracking
+     brightnessFactor: 1.0 // Added for brightness adjustment
    };
    
    // Reset rotation angles
@@ -392,28 +444,31 @@
    const W = canvas.width;
    const H = canvas.height;
    
+   // Add a small buffer to ensure rays reach the edge
+   const buffer = 1.0;
+   
    // Top edge (y=0)
    let tTop = null;
    if (Math.abs(D.y) > 1e-6) {
-     tTop = (0 - S.y) / D.y;
+     tTop = (0 - S.y - buffer) / D.y;
    }
    
    // Bottom edge (y=H)
    let tBottom = null;
    if (Math.abs(D.y) > 1e-6) {
-     tBottom = (H - S.y) / D.y;
+     tBottom = (H - S.y + buffer) / D.y;
    }
    
    // Left edge (x=0)
    let tLeft = null;
    if (Math.abs(D.x) > 1e-6) {
-     tLeft = (0 - S.x) / D.x;
+     tLeft = (0 - S.x - buffer) / D.x;
    }
    
    // Right edge (x=W)
    let tRight = null;
    if (Math.abs(D.x) > 1e-6) {
-     tRight = (W - S.x) / D.x;
+     tRight = (W - S.x + buffer) / D.x;
    }
    
    // Find the smallest positive t
@@ -456,6 +511,10 @@
    let x = semiMinorAxis * Math.cos(angleRad);
    let y = semiMajorAxis * Math.sin(angleRad);
    
+   // Store previous position for direction calculation
+   const prevX = earth.x - sun.x;
+   const prevY = earth.y - sun.y;
+   
    // Apply inclination rotation
    const inclinedX = x;
    const inclinedY = y * Math.cos(inclinationRad) + x * Math.sin(inclinationRad);
@@ -464,10 +523,17 @@
    earth.x = sun.x + inclinedX;
    earth.y = sun.y + inclinedY;
    
+   // Calculate direction of movement (for z-index)
+   // This tracks whether Earth is moving upward or downward
+   // Negative movingDirection = moving upward, positive = moving downward
+   earth.movingDirection = Math.sign(Math.sin(angleRad));
+   
    // Store current parameters for orbit drawing
    earth.currentSemiMajorAxis = semiMajorAxis;
    earth.currentSemiMinorAxis = semiMinorAxis;
    earth.currentInclination = currentInclination;
+   earth.prevX = prevX;
+   earth.prevY = prevY;
    
    // Update earth's own rotation
    earth.rotationAngle = earthRotationAngle;
@@ -475,75 +541,182 @@
    // Calculate seasonal effect based on position in orbit
    earth.seasonalAngle = (rotationAngle + 90) % 360; // Northern hemisphere summer at 90°
    
-   // UPDATED: Modify earth size based on both inclination and vertical position
-   // Only apply size changes if there's inclination (scrollProgress > 0)
+   // Calculate Earth's position relative to the Sun in 3D space
+   // This is used for determining when Earth is behind the Sun
+   // Calculate normalized position on orbit (0-1)
+   const normalizedOrbitPosition = (rotationAngle % 360) / 360;
+   
+   // Determine if Earth is in front of or behind the Sun based on angle
+   // Earth is behind Sun when in the half of orbit where cos(angle) < 0
+   const isBehindSun = Math.cos(angleRad) < 0;
+   
+   // Calculate how close Earth is to directly overlapping the Sun
+   // When cos(angle) = 0, Earth is directly to the side
+   // When cos(angle) = -1 or 1, Earth is directly in line with Sun
+   const alignmentWithSun = Math.abs(Math.cos(angleRad));
+   
+   // Calculate a depth factor that is:
+   // - Positive when Earth is in front of Sun (closer to viewer)
+   // - Negative when Earth is behind Sun (farther from viewer)
+   // - Magnitude increases as Earth gets more aligned with Sun
+   const depthFactor = isBehindSun ? -alignmentWithSun : alignmentWithSun;
+   
+   // Store the depth factor for use in drawing
+   earth.depthFactor = depthFactor;
+   
+   // IMPROVED SIZE VARIATION: More realistic 3D effect
+   // Size varies from 1.4x (closest to viewer) to 0.5x (farthest from viewer)
    if (scrollProgress > 0) {
-     // Normalize y position to range -1 to 1
-     const normalizedY = inclinedY / semiMajorAxis;
+     // Calculate size based on depth and the Earth's position relative to Sun
+     // Map depth factor from -1 (farthest behind Sun) to 1 (closest to viewer)
+     // to size multiplier from 0.5 to 1.4
      
-     // Map to size range: 0.6 when up (negative y), 1.4 when down (positive y)
-     // Scale the effect based on scroll progress/inclination
-     const sizeMultiplier = 1 + (0.4 * normalizedY * scrollProgress);
+     // First, calculate a base scale factor that increases with scroll/inclination
+     const inclinationEffect = scrollProgress * 0.9; // 0 to 0.9
      
-     // Apply size multiplier
-     earth.currentSize = earth.r * sizeMultiplier;
+     // Calculate apparent size based on position relative to Sun
+     // Depthfactor ranges from -1 to 1, we want to map this to 0.5 to 1.4
+     const distanceScaleFactor = 0.95 + (0.45 * depthFactor);
+     
+     // Combine the effects - size is affected by both inclination and position
+     const finalSizeMultiplier = 1.0 + (inclinationEffect * distanceScaleFactor);
+     
+     // Ensure we stay within the specified size range (0.5 to 1.4 times normal size)
+     const clampedMultiplier = Math.max(0.5, Math.min(1.4, finalSizeMultiplier));
+     
+     // Apply to Earth's current size
+     earth.currentSize = earth.r * clampedMultiplier;
    } else {
      // At top of page, keep Earth at its original size
      earth.currentSize = earth.r;
    }
    
-   // Add z-index tracking for Earth to determine when it's behind the Sun
-   // Improved logic to better handle transitions - uses distance from sun center to viewer
-   // Add a small buffer zone to prevent flickering at transition points
-   const distanceToViewer = Math.abs(x); // x-distance represents depth in this view
-   const transitionBuffer = 5; // Buffer zone for smoother transitions
-   earth.behindSun = (distanceToViewer < sun.r + transitionBuffer) && (Math.cos(angleRad) < 0.1);
+   // Calculate position in the orbit for brightness adjustment
+   // Calculate normalized height in orbit (0 = middle, 1 = top, -1 = bottom)
+   const normalizedHeight = Math.sin(angleRad);
+   
+   // Determine brightness factor based on position
+   // Brightest at the top of orbit, slightly brighter when overlapping with Sun
+   const topOfOrbitBrightness = Math.max(0, normalizedHeight); // 0 to 1 (brightest at top)
+   const sunOverlapBrightness = isOverlappingSun ? 0.15 : 0; // Bonus brightness when overlapping Sun
+   
+   // Combine factors with appropriate weighting
+   earth.brightnessFactor = 1.0 + (topOfOrbitBrightness * 0.25) + sunOverlapBrightness;
+   
+   // COMPLETELY REVISED Z-INDEX CALCULATION:
+   // This is the critical part that determines if Earth appears in front of or behind the Sun
+   
+   // First, check if there's any overlap at all
+   const distanceFromSunCenter = Math.sqrt(inclinedX * inclinedX + inclinedY * inclinedY);
+   const isOverlappingSun = distanceFromSunCenter < (sun.r + earth.currentSize * 0.8);
+   
+   // Only apply special handling when there's significant inclination and actual overlap
+   if (isOverlappingSun && currentInclination > 30) {
+     // REVERSED LOGIC (per request):
+     // - Earth moving from bottom to top (negative direction) → Earth is BEHIND Sun
+     // - Earth moving from top to bottom (positive direction) → Earth is IN FRONT of Sun
+     earth.behindSun = earth.movingDirection < 0; // If moving upward, Earth is behind Sun
+   } else {
+     // When not in overlap zone, use standard depth calculation based on orbit position
+     const angleThreshold = currentInclination > 50 ? 0.05 : 0.2;
+     earth.behindSun = isBehindSun && alignmentWithSun > angleThreshold && currentInclination > 30;
+   }
+   
+   // Store angle info for debugging
+   earth.angle = rotationAngle;
+   earth.sinValue = Math.sin(angleRad);
  }
  
  // Calculate ray endpoints based on current earth position and size
  function updateRayEndpoints() {
+   // Get the maximum possible ray length (diagonal of canvas)
+   const maxRayLength = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height);
+   
    for (const ray of rays) {
      // Update ray start point to be on the sun's periphery
      const angleRad = degToRad(ray.angle);
      ray.start.x = sun.x + Math.cos(angleRad) * sun.r;
      ray.start.y = sun.y + Math.sin(angleRad) * sun.r;
      
-     // Intersection with Earth - use currentSize
-     const tEarth = lineCircleIntersection(ray.start, ray.dir, earth, earth.currentSize);
-     
-     // Intersection with canvas edges
-     const tCanvas = getCanvasIntersection(ray.start, ray.dir);
-
-     // Decide final endpoint
-     let tFinal = null;
-     if (tEarth !== null && tEarth > 0) {
-       // If we have Earth intersection, see if canvas edge is closer
-       if (tCanvas !== null) {
-         tFinal = Math.min(tEarth, tCanvas);
-       } else {
-         tFinal = tEarth;
-       }
-     } else {
-       // No Earth intersection => use canvas edge
-       tFinal = tCanvas;
+     // Ensure the direction vector is normalized
+     const magnitude = Math.sqrt(ray.dir.x * ray.dir.x + ray.dir.y * ray.dir.y);
+     if (magnitude > 0 && Math.abs(magnitude - 1.0) > 0.001) {
+       ray.dir.x /= magnitude;
+       ray.dir.y /= magnitude;
      }
      
-     // Calculate end point
-     if (tFinal !== null && tFinal > 0) {
+     // Calculate ray endpoint
+     // If Earth is in front of the Sun, rays should stop at the Earth's edge
+     // If Earth is behind the Sun, rays should continue through Earth
+     
+     if (earth.behindSun) {
+       // Earth is behind Sun, rays continue past Earth
+       const tCanvas = getCanvasIntersection(ray.start, ray.dir);
+       
+       if (tCanvas !== null && tCanvas > 0) {
+         ray.end = {
+           x: ray.start.x + tCanvas * ray.dir.x,
+           y: ray.start.y + tCanvas * ray.dir.y
+         };
+       } else {
+         ray.end = {
+           x: ray.start.x + ray.dir.x * maxRayLength,
+           y: ray.start.y + ray.dir.y * maxRayLength
+         };
+       }
+       
+       // No Earth intersection, so no need to store intersection point
+       ray.earthIntersection = null;
+     } else {
+       // Earth is in front of Sun, rays stop at Earth
+       const tEarth = lineCircleIntersection(ray.start, ray.dir, earth, earth.currentSize);
+       const tCanvas = getCanvasIntersection(ray.start, ray.dir);
+       
+       // Determine final endpoint
+       let tFinal = null;
+       
+       if (tEarth !== null && tEarth > 0) {
+         // Ray hits Earth - extend slightly to ensure no visual gap
+         tFinal = tEarth + 0.5; // Add a small extension to ensure rays connect with Earth
+         
+         // Store the exact Earth intersection point for gradient calculation
+         ray.earthIntersection = {
+           x: ray.start.x + tEarth * ray.dir.x,
+           y: ray.start.y + tEarth * ray.dir.y
+         };
+         
+         // But don't extend past canvas
+         if (tCanvas !== null && tFinal > tCanvas) {
+           tFinal = tCanvas;
+         }
+       } else if (tCanvas !== null && tCanvas > 0) {
+         // Ray hits canvas edge
+         tFinal = tCanvas;
+         ray.earthIntersection = null;
+       } else {
+         // Fallback - extend to a reasonable length
+         tFinal = maxRayLength / Math.sqrt(ray.dir.x * ray.dir.x + ray.dir.y * ray.dir.y);
+         ray.earthIntersection = null;
+       }
+       
        ray.end = {
          x: ray.start.x + tFinal * ray.dir.x,
          y: ray.start.y + tFinal * ray.dir.y
        };
-     } else {
-       ray.end = { x: ray.start.x, y: ray.start.y };
      }
    }
  }
  
  // Draw the Earth with realistic image - improved for seamless wrapping
  function drawEarth() {
+   // Draw solid black background first to ensure complete opacity
+   ctx.fillStyle = '#000000';
+   ctx.beginPath();
+   ctx.arc(earth.x, earth.y, earth.currentSize, 0, Math.PI * 2);
+   ctx.fill();
+   
    // Draw base Earth (ocean) as fallback
-   ctx.fillStyle = '#1565C0'; // Deep blue for oceans
+   ctx.fillStyle = '#093456'; // Darker, more muted blue for oceans
    ctx.beginPath();
    ctx.arc(earth.x, earth.y, earth.currentSize, 0, Math.PI * 2);
    ctx.fill();
@@ -568,16 +741,17 @@
        ctx.rotate(degToRad(earth.axialTilt));
        
        // Calculate the offset based on rotation angle
-       // This creates a seamless wrapping effect as the Earth rotates
        const rotationAngleRad = degToRad(earth.rotationAngle);
        const imageWidth = earthImage.width || size;
        
        // Calculate how much to offset the image horizontally based on rotation
-       // This creates the illusion of rotating around the y-axis
        const offsetX = -imageWidth * (rotationAngleRad / (Math.PI * 2));
        
+       // Apply brightness adjustment based on Earth's position in orbit
+       // This is where we implement the brightness variation requirement
+       ctx.globalAlpha = Math.min(1.0, earth.brightnessFactor);
+       
        // Draw the image twice side by side to create a seamless wrap
-       // First copy - main view
        ctx.drawImage(
          earthImage, 
          -size/2 + offsetX % size, 
@@ -586,7 +760,6 @@
          size
        );
        
-       // Second copy - wrapping around the edge
        ctx.drawImage(
          earthImage, 
          -size/2 + offsetX % size + size, 
@@ -595,6 +768,9 @@
          size
        );
        
+       // Reset opacity
+       ctx.globalAlpha = 1.0;
+       
        // Reset transformation
        ctx.setTransform(1, 0, 0, 1, 0, 0);
        
@@ -602,25 +778,22 @@
        ctx.restore();
      } catch (error) {
        console.error("Error drawing Earth image:", error);
-       // The blue circle fallback is already drawn
      }
    }
    
-   // Add a subtle atmosphere glow
-   // Adjust glow based on seasonal angle to simulate different lighting conditions
-   const seasonalFactor = Math.cos(degToRad(earth.seasonalAngle));
-   const glowIntensity = 0.3 + seasonalFactor * 0.1; // Brighter in summer, dimmer in winter
+   // Add very subtle atmosphere glow (further reduced)
+   const glowIntensity = 0.07 * earth.brightnessFactor; // Scaled by brightness factor
    
    const glowGrad = ctx.createRadialGradient(
-     earth.x, earth.y, earth.currentSize * 0.9,
-     earth.x, earth.y, earth.currentSize * 1.1
+     earth.x, earth.y, earth.currentSize * 0.95,
+     earth.x, earth.y, earth.currentSize * 1.05
    );
-   glowGrad.addColorStop(0, `rgba(255, 255, 255, ${glowIntensity})`);
-   glowGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+   safeAddColorStop(glowGrad, 0, `rgba(255, 255, 255, ${glowIntensity})`);
+   safeAddColorStop(glowGrad, 1, 'rgba(255, 255, 255, 0)');
    
    ctx.fillStyle = glowGrad;
    ctx.beginPath();
-   ctx.arc(earth.x, earth.y, earth.currentSize * 1.1, 0, Math.PI * 2);
+   ctx.arc(earth.x, earth.y, earth.currentSize * 1.05, 0, Math.PI * 2);
    ctx.fill();
  }
  
@@ -680,131 +853,198 @@
    ctx.closePath();
    ctx.stroke();
    
-   // MODIFIED: Improved Earth-Sun drawing order with smoother transitions
-   if (earth.behindSun) {
-     // Draw Sun first if Earth is behind it
-     drawSun();
-     drawEarth();
-   } else {
-     // Draw Earth first if it's in front of the Sun
-     drawEarth();
-     drawSun();
-   }
+   // Set back to normal composite operation before drawing main elements
+   ctx.globalCompositeOperation = 'source-over';
    
-   // Draw rays after both Earth and Sun to ensure they appear on top
+   // Draw rays with improved rendering
    ctx.lineWidth = 1;
+   
+   // First sort rays by angle for consistent drawing order
+   rays.sort((a, b) => a.angle - b.angle);
+   
+   // Use lighter blend mode for rays only
+   ctx.globalCompositeOperation = 'lighter';
+   
+   // Always draw rays first (with lighter blend mode)
    for (const ray of rays) {
-     // Make rays slightly transparent when they'd be behind Earth
-     if (earth.behindSun && lineCircleIntersection(ray.start, ray.dir, earth, earth.currentSize)) {
-       const dimmedOpacity = ray.baseOpacity * 0.5;
-       ctx.strokeStyle = ray.color.replace(/[\d.]+\)/, dimmedOpacity + ')');
+     // Use the current calculated opacity
+     let rayOpacity = ray.currentOpacity;
+     
+     // Draw the ray with a gradient for better appearance
+     // If the ray intersects with Earth, make a custom gradient that stays bright until Earth
+     if (ray.earthIntersection) {
+       // Calculate the distance from Sun to Earth intersection
+       const sunToEarthDist = Math.sqrt(
+         Math.pow(ray.earthIntersection.x - ray.start.x, 2) + 
+         Math.pow(ray.earthIntersection.y - ray.start.y, 2)
+       );
+       
+       // Calculate full ray length
+       const fullRayLength = Math.sqrt(
+         Math.pow(ray.end.x - ray.start.x, 2) + 
+         Math.pow(ray.end.y - ray.start.y, 2)
+       );
+       
+       // Calculate where Earth intersection is along the ray (0-1)
+       const earthIntersectRatio = sunToEarthDist / fullRayLength;
+       
+       // Create a gradient that maintains full brightness until Earth's surface
+       const rayGrad = ctx.createLinearGradient(
+         ray.start.x, ray.start.y,
+         ray.end.x, ray.end.y
+       );
+       
+       // Stay bright until just before hitting Earth
+       safeAddColorStop(rayGrad, 0, `rgba(255, 215, 0, ${rayOpacity})`);
+       // Maintain brightness right up until Earth intersection
+       safeAddColorStop(rayGrad, earthIntersectRatio - 0.001, `rgba(255, 215, 0, ${rayOpacity})`);
+       // Then quickly fade out just after Earth surface
+       safeAddColorStop(rayGrad, earthIntersectRatio + 0.02, `rgba(255, 215, 0, 0)`);
+       
+       ctx.strokeStyle = rayGrad;
      } else {
-       ctx.strokeStyle = ray.color;
+       // Standard gradient for rays that don't hit Earth
+       const rayGrad = ctx.createLinearGradient(
+         ray.start.x, ray.start.y,
+         ray.end.x, ray.end.y
+       );
+       
+       // Create a fade-out effect along the ray
+       safeAddColorStop(rayGrad, 0, `rgba(255, 215, 0, ${rayOpacity})`);
+       safeAddColorStop(rayGrad, 0.7, `rgba(255, 215, 0, ${rayOpacity * 0.7})`);
+       safeAddColorStop(rayGrad, 1, `rgba(255, 215, 0, 0)`);
+       
+       ctx.strokeStyle = rayGrad;
      }
      
+     // Draw the ray
      ctx.beginPath();
      ctx.moveTo(ray.start.x, ray.start.y);
      ctx.lineTo(ray.end.x, ray.end.y);
      ctx.stroke();
    }
+   
+   // Reset composite operation for normal drawing
+   ctx.globalCompositeOperation = 'source-over';
+   
+   // Now draw Earth and Sun in the correct order based on which is in front
+   if (earth.behindSun) {
+     // Earth behind Sun → Draw Earth, then Sun
+     // This gives Sun a higher z-index because it's drawn last
+     drawEarth();
+     drawSun();
+   } else {
+     // Earth in front of Sun → Draw Sun, then Earth
+     // This gives Earth a higher z-index because it's drawn last
+     drawSun();
+     drawEarth();
+   }
+   
+   // Reset composite operation
+   ctx.globalCompositeOperation = 'source-over';
  }
  
- // Draw stars with flickering effect
+ // Draw stars with enhanced flickering effect
  function drawStars() {
    const time = performance.now() * 0.001; // Current time in seconds
    
    // Calculate star movement speed based on Earth's revolution speed
    const earthRevolutionSpeed = baseOrbitSpeed * speedMultiplier;
-   const starMovementFactor = earthRevolutionSpeed / 100; // 1/100 of Earth's speed
+   const starMovementFactor = earthRevolutionSpeed / 80; // Increased from 1/100 to 1/80
    
    for (const star of stars) {
-     // Calculate current brightness with more randomized flickering effect
-     // Use different twinkling patterns based on the star's type
+     // Enhanced twinkling algorithm with more dramatic effects
      let combinedFlicker;
      
      switch(star.twinklePattern) {
-       case 0: // Simple sine wave
-         combinedFlicker = Math.sin(time * star.flickerSpeed + star.phase) * 0.2;
+       case 0: // Simple sine wave, now more pronounced
+         combinedFlicker = Math.sin(time * star.flickerSpeed + star.phase) * 0.3;
          break;
        case 1: // Multiple sine waves with different frequencies
-         combinedFlicker = Math.sin(time * star.flickerSpeed + star.phase) * 0.15 +
-                          Math.sin(time * (star.flickerSpeed * 0.7) + star.phase2) * 0.1 +
-                          Math.sin(time * (star.flickerSpeed * 1.3) + star.phase3) * 0.05;
+         combinedFlicker = Math.sin(time * star.flickerSpeed + star.phase) * 0.2 +
+                          Math.sin(time * (star.flickerSpeed * 0.7) + star.phase2) * 0.15 +
+                          Math.sin(time * (star.flickerSpeed * 1.3) + star.phase3) * 0.08;
          break;
        case 2: // Sharper flicker using absolute sine
-         combinedFlicker = Math.abs(Math.sin(time * star.flickerSpeed + star.phase)) * 0.2 - 0.1;
+         combinedFlicker = Math.abs(Math.sin(time * star.flickerSpeed + star.phase)) * 0.3 - 0.15;
          break;
-       case 3: // Subtle random flicker
-         combinedFlicker = (Math.sin(time * star.flickerSpeed + star.phase) * 0.1) + 
-                          (Math.sin(time * 10 + star.phase2) * 0.05 * Math.sin(time + star.phase3));
+       case 3: // Complex pattern with occasional dramatic flares
+         const baseFlicker = Math.sin(time * star.flickerSpeed + star.phase) * 0.15;
+         const randomFlare = Math.pow(Math.sin(time * 0.2 + star.phase2), 10) * 0.5; // Occasional bright flares
+         combinedFlicker = baseFlicker + randomFlare;
          break;
      }
      
-     // Apply the combined flicker effect
+     // Apply the enhanced flicker effect
      const brightness = Math.max(0.1, Math.min(1, star.baseBrightness + combinedFlicker));
      
-     // Calculate position with movement tied to Earth's revolution speed
-     // Distant stars move less (parallax effect)
+     // Enhanced parallax movement
      const distanceFactor = 1 / star.distance;
-     let moveX = Math.cos(time * star.moveSpeed * starMovementFactor + star.movePhase) * star.moveRadius * distanceFactor;
-     let moveY = Math.sin(time * star.moveSpeed * starMovementFactor + star.movePhase + star.moveAngle) * star.moveRadius * distanceFactor;
+     const timeScale = time * starMovementFactor;
      
-     // Add secondary movement for some stars
+     // Primary movement - now more pronounced for closer stars
+     let moveX = Math.cos(timeScale * star.moveSpeed + star.movePhase) * star.moveRadius * distanceFactor * 1.5;
+     let moveY = Math.sin(timeScale * star.moveSpeed + star.movePhase + star.moveAngle) * star.moveRadius * distanceFactor * 1.5;
+     
+     // Add secondary movement with better properties for some stars
      if (star.hasSecondaryMovement) {
-       moveX += Math.cos(time * star.secondaryMoveSpeed * starMovementFactor + star.secondaryMovePhase) * star.secondaryMoveRadius * distanceFactor;
-       moveY += Math.sin(time * star.secondaryMoveSpeed * starMovementFactor + star.secondaryMovePhase * 1.5) * star.secondaryMoveRadius * distanceFactor;
+       moveX += Math.cos(timeScale * star.secondaryMoveSpeed + star.secondaryMovePhase) * star.secondaryMoveRadius * distanceFactor * 1.8;
+       moveY += Math.sin(timeScale * star.secondaryMoveSpeed + star.secondaryMovePhase * 1.5) * star.secondaryMoveRadius * distanceFactor * 1.8;
      }
      
      // Apply movement to position
      const currentX = star.originalX + moveX;
      const currentY = star.originalY + moveY;
      
-     // Set the star color with current brightness
-     if (star.hue === 0) {
-       // White stars
-       ctx.fillStyle = `rgba(255, 255, 255, ${brightness})`;
-     } else {
-       // Colored stars (blue or yellow tint)
-       ctx.fillStyle = `hsla(${star.hue}, ${star.saturation}%, 80%, ${brightness})`;
-     }
-     
-     // Draw glow effect for some stars
+     // Further enhance glow effect for more dramatic twinkling
      if (star.hasGlow) {
-       const glowSize = star.size * (2 + Math.sin(time * 0.5 + star.phase) * 0.5);
+       const pulseEffect = 0.5 + Math.sin(time * 0.3 + star.phase) * 0.5;
+       const glowSize = star.size * (2.5 + pulseEffect);
+       
+       // More pronounced glow gradient
        const gradient = ctx.createRadialGradient(
          currentX, currentY, 0,
          currentX, currentY, glowSize
        );
        
+       // Enhanced glow colors
        if (star.hue === 0) {
-         gradient.addColorStop(0, `rgba(255, 255, 255, ${brightness * 0.8})`);
-         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+         safeAddColorStop(gradient, 0, `rgba(255, 255, 255, ${brightness * 0.9})`);
+         safeAddColorStop(gradient, 0.5, `rgba(255, 255, 255, ${brightness * 0.3})`);
+         safeAddColorStop(gradient, 1, 'rgba(255, 255, 255, 0)');
        } else {
-         gradient.addColorStop(0, `hsla(${star.hue}, ${star.saturation}%, 80%, ${brightness * 0.8})`);
-         gradient.addColorStop(1, `hsla(${star.hue}, ${star.saturation}%, 80%, 0)`);
+         safeAddColorStop(gradient, 0, `hsla(${star.hue}, ${star.saturation}%, 80%, ${brightness * 0.9})`);
+         safeAddColorStop(gradient, 0.5, `hsla(${star.hue}, ${star.saturation}%, 80%, ${brightness * 0.3})`);
+         safeAddColorStop(gradient, 1, `hsla(${star.hue}, ${star.saturation}%, 80%, 0)`);
        }
        
        ctx.fillStyle = gradient;
        ctx.beginPath();
        ctx.arc(currentX, currentY, glowSize, 0, Math.PI * 2);
        ctx.fill();
-       
-       // Reset fill style for the star itself
-       if (star.hue === 0) {
-         ctx.fillStyle = `rgba(255, 255, 255, ${brightness})`;
-       } else {
-         ctx.fillStyle = `hsla(${star.hue}, ${star.saturation}%, 80%, ${brightness})`;
-       }
      }
      
-     // Draw the star
+     // Draw the star itself with enhanced brightness
+     if (star.hue === 0) {
+       ctx.fillStyle = `rgba(255, 255, 255, ${brightness})`;
+     } else {
+       ctx.fillStyle = `hsla(${star.hue}, ${star.saturation}%, 80%, ${brightness})`;
+     }
+     
      ctx.beginPath();
      ctx.arc(currentX, currentY, star.size, 0, Math.PI * 2);
      ctx.fill();
    }
  }
  
- // Animation loop
+ // New utility function to safely add color stops
+ function safeAddColorStop(gradient, position, color) {
+   // Ensure position is within valid range [0, 1]
+   const safePosition = Math.max(0, Math.min(1, position));
+   gradient.addColorStop(safePosition, color);
+ }
+
+ // Animation loop - improved ray animation
  function animate() {
    if (isAnimating) {
      // Apply speed multiplier to both rotation speeds
@@ -821,18 +1061,31 @@
      updateEarthPosition();
      updateRayEndpoints();
      
-     // Subtle animation: smoothly animate ray opacities instead of random flickering
+     // Toned down ray shimmer animation
      const time = performance.now() * 0.001; // Current time in seconds
      for (const ray of rays) {
-       // Use sine wave to create smooth pulsing effect
-       const pulseAmount = Math.sin(time + ray.phase) * 0.05;
-       const opacity = Math.max(0.1, Math.min(0.4, ray.baseOpacity + pulseAmount));
-       ray.color = `rgba(255, 215, 0, ${opacity})`;
+       // Create more subtle shimmer effect
+       const shimmerFactor = Math.sin(time * ray.shimmerSpeed + ray.phase) * (ray.shimmerAmount * 0.7);
+       const secondaryShimmer = Math.sin(time * 0.5 + ray.phase * 2) * 0.015; // Reduced secondary effect
+       
+       // Combine multiple shimmer effects
+       const combinedShimmer = shimmerFactor + secondaryShimmer;
+       
+       // Apply shimmer to opacity with reduced maximum opacity and clamping
+       ray.currentOpacity = Math.max(0.05, Math.min(0.45, ray.baseOpacity + combinedShimmer));
+       
+       // Less intense boost for vertical rays
+       const verticalFactor = Math.abs(Math.sin(degToRad(ray.angle)));
+       if (verticalFactor > 0.85) { // Within ~30 degrees of vertical
+         ray.currentOpacity = Math.min(0.5, ray.currentOpacity * 1.15); // Reduced boost for vertical rays with clamping
+       }
+       
+       // Update ray color with current opacity
+       ray.color = `rgba(255, 215, 0, ${ray.currentOpacity})`;
      }
    }
    
    // Always draw the scene, even when orbit animation is paused
-   // This ensures stars continue to twinkle and move in the background
    drawScene();
    
    // Continue animation
@@ -1073,30 +1326,30 @@
 
 // NEW: Extract Sun drawing to a separate function for better control over drawing order
 function drawSun() {
-  // Draw Sun (yellow circle with gradient)
+  // Draw Sun with reduced brightness
   const sunGrad = ctx.createRadialGradient(
     sun.x, sun.y, 0,
     sun.x, sun.y, sun.r
   );
-  sunGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-  sunGrad.addColorStop(0.2, 'rgba(255, 255, 0, 1)');
-  sunGrad.addColorStop(1, 'rgba(255, 165, 0, 0.8)');
+  safeAddColorStop(sunGrad, 0, 'rgba(255, 250, 235, 0.95)'); // Less bright core
+  safeAddColorStop(sunGrad, 0.2, 'rgba(255, 235, 0, 0.85)'); // More muted yellow
+  safeAddColorStop(sunGrad, 1, 'rgba(255, 140, 0, 0.7)'); // More muted orange edge
   
   ctx.fillStyle = sunGrad;
   ctx.beginPath();
   ctx.arc(sun.x, sun.y, sun.r, 0, Math.PI * 2);
   ctx.fill();
   
-  // Add a sun glow effect
+  // Add more subtle sun glow effect
   const sunOuterGlow = ctx.createRadialGradient(
     sun.x, sun.y, sun.r * 0.8,
-    sun.x, sun.y, sun.r * 1.5
+    sun.x, sun.y, sun.r * 1.4
   );
-  sunOuterGlow.addColorStop(0, 'rgba(255, 165, 0, 0.4)');
-  sunOuterGlow.addColorStop(1, 'rgba(255, 165, 0, 0)');
+  safeAddColorStop(sunOuterGlow, 0, 'rgba(255, 140, 0, 0.25)'); // Reduced glow intensity
+  safeAddColorStop(sunOuterGlow, 1, 'rgba(255, 140, 0, 0)');
   
   ctx.fillStyle = sunOuterGlow;
   ctx.beginPath();
-  ctx.arc(sun.x, sun.y, sun.r * 1.5, 0, Math.PI * 2);
+  ctx.arc(sun.x, sun.y, sun.r * 1.4, 0, Math.PI * 2);
   ctx.fill();
 }
