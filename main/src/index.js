@@ -26,7 +26,7 @@
  // Initially hide all content but show controls
  heroTitle.style.opacity = '0';
  heroSubtitle.style.opacity = '0';
- mainNav.style.opacity = '0.2';
+ mainNav.style.opacity = '1';
  controls.style.opacity = '1';
  speedDisplay.style.opacity = '1';
  
@@ -60,7 +60,7 @@
    heroTitle.style.transform = 'translateY(30px)';
    heroSubtitle.style.opacity = '0';
    heroSubtitle.style.transform = 'translateY(30px)';
-   mainNav.style.opacity = '0.2';
+   mainNav.style.opacity = '1';
    clearTimeout(initialLoadTimeout);
  }
  
@@ -164,16 +164,16 @@
      const angleDeg = i * rayInterval;
      const angleRad = degToRad(angleDeg);
      
-     // Direction vector from the Sun
+     // Direction vector from the Sun (unchanged)
      const dir = {
        x: Math.cos(angleRad),
        y: Math.sin(angleRad)
      };
      
-     // Start point is the center of the sun (will be updated in updateRayEndpoints)
+     // Start point is now on the periphery of the sun instead of center
      const start = {
-       x: sun.x,
-       y: sun.y
+       x: sun.x + dir.x * sun.r, // Start from sun's surface
+       y: sun.y + dir.y * sun.r
      };
      
      // Create ray with initial end point (will be updated)
@@ -317,14 +317,17 @@
    
    earth = {
      orbitRadius: earthOrbitRadius,
-     r: Math.min(canvas.width, canvas.height) * 0.075, // Reduced by half from 0.15
+     r: Math.min(canvas.width, canvas.height) * 0.075, // Base radius
+     currentSize: Math.min(canvas.width, canvas.height) * 0.075, // Initial current size
      // Real astronomical parameters
      axialTilt: 23.5, // Earth's axial tilt in degrees
      orbitalInclination: 0, // Earth's orbital inclination (simplified)
      x: centerX + semiMajorAxis * Math.cos(degToRad(rotationAngle)), // Initial position (0 degrees)
      y: centerY + semiMinorAxis * Math.sin(degToRad(rotationAngle)), // Initial position on elliptical orbit
      rotationAngle: 0, // Initial rotation angle
-     seasonalAngle: 0 // Added for seasonal effect
+     seasonalAngle: 0, // Added for seasonal effect
+     currentInclination: 0, // Current inclination of orbit
+     behindSun: false // Added for z-index tracking
    };
    
    // Reset rotation angles
@@ -431,38 +434,82 @@
    
    // Get current scroll offset for elliptical orbit calculation
    const scrollY = window.scrollY || 0;
-   const parallaxFactor = 0.2;
+   const maxScroll = document.body.scrollHeight - window.innerHeight;
+   const scrollProgress = Math.min(1, scrollY / maxScroll);
    
    // Calculate ellipse parameters based on scroll
-   // Use the same eccentricity calculation as in updateEarthPosition
-   const baseEccentricity = 0.0167; // Earth's actual orbital eccentricity
-   const scrollEccentricity = Math.min(0.2, scrollY * parallaxFactor / earth.orbitRadius);
-   const eccentricity = baseEccentricity + scrollEccentricity;
-   const semiMajorAxis = earth.orbitRadius;
-   const semiMinorAxis = semiMajorAxis * Math.sqrt(1 - eccentricity * eccentricity);
+   // As user scrolls, increase eccentricity to make orbit more elliptical
+   const minEccentricity = 0.0167; // Earth's actual orbital eccentricity
+   const maxEccentricity = 0.7; // Maximum eccentricity when fully scrolled
+   const eccentricity = minEccentricity + (maxEccentricity - minEccentricity) * scrollProgress;
+   
+   // Calculate inclination based on scroll (0 to 85 degrees - almost inline with sun)
+   const maxInclination = 85; // Increased from 20 to 85 for dramatic effect
+   const currentInclination = maxInclination * scrollProgress;
+   const inclinationRad = degToRad(currentInclination);
+   
+   // Make the major axis vertical and minor axis horizontal
+   const semiMajorAxis = earth.orbitRadius; // Vertical axis
+   const semiMinorAxis = semiMajorAxis * Math.sqrt(1 - eccentricity * eccentricity); // Horizontal axis
    
    // Calculate position on elliptical orbit
-   // Parametric equation of ellipse: x = a*cos(t), y = b*sin(t)
-   earth.x = sun.x + semiMajorAxis * Math.cos(angleRad);
-   earth.y = sun.y + semiMinorAxis * Math.sin(angleRad);
+   let x = semiMinorAxis * Math.cos(angleRad);
+   let y = semiMajorAxis * Math.sin(angleRad);
+   
+   // Apply inclination rotation
+   const inclinedX = x;
+   const inclinedY = y * Math.cos(inclinationRad) + x * Math.sin(inclinationRad);
+   
+   // Set earth position
+   earth.x = sun.x + inclinedX;
+   earth.y = sun.y + inclinedY;
+   
+   // Store current parameters for orbit drawing
+   earth.currentSemiMajorAxis = semiMajorAxis;
+   earth.currentSemiMinorAxis = semiMinorAxis;
+   earth.currentInclination = currentInclination;
    
    // Update earth's own rotation
    earth.rotationAngle = earthRotationAngle;
    
    // Calculate seasonal effect based on position in orbit
-   // This will be used for subtle lighting effects
    earth.seasonalAngle = (rotationAngle + 90) % 360; // Northern hemisphere summer at 90°
+   
+   // UPDATED: Modify earth size based on both inclination and vertical position
+   // Only apply size changes if there's inclination (scrollProgress > 0)
+   if (scrollProgress > 0) {
+     // Normalize y position to range -1 to 1
+     const normalizedY = inclinedY / semiMajorAxis;
+     
+     // Map to size range: 0.6 when up (negative y), 1.4 when down (positive y)
+     // Scale the effect based on scroll progress/inclination
+     const sizeMultiplier = 1 + (0.4 * normalizedY * scrollProgress);
+     
+     // Apply size multiplier
+     earth.currentSize = earth.r * sizeMultiplier;
+   } else {
+     // At top of page, keep Earth at its original size
+     earth.currentSize = earth.r;
+   }
+   
+   // Add z-index tracking for Earth to determine when it's behind the Sun
+   // Improved logic to better handle transitions - uses distance from sun center to viewer
+   // Add a small buffer zone to prevent flickering at transition points
+   const distanceToViewer = Math.abs(x); // x-distance represents depth in this view
+   const transitionBuffer = 5; // Buffer zone for smoother transitions
+   earth.behindSun = (distanceToViewer < sun.r + transitionBuffer) && (Math.cos(angleRad) < 0.1);
  }
  
- // Calculate ray endpoints based on current earth position
+ // Calculate ray endpoints based on current earth position and size
  function updateRayEndpoints() {
    for (const ray of rays) {
-     // Always update ray start point to current sun position
-     ray.start.x = sun.x;
-     ray.start.y = sun.y;
+     // Update ray start point to be on the sun's periphery
+     const angleRad = degToRad(ray.angle);
+     ray.start.x = sun.x + Math.cos(angleRad) * sun.r;
+     ray.start.y = sun.y + Math.sin(angleRad) * sun.r;
      
-     // Intersection with Earth
-     const tEarth = lineCircleIntersection(ray.start, ray.dir, earth, earth.r);
+     // Intersection with Earth - use currentSize
+     const tEarth = lineCircleIntersection(ray.start, ray.dir, earth, earth.currentSize);
      
      // Intersection with canvas edges
      const tCanvas = getCanvasIntersection(ray.start, ray.dir);
@@ -498,7 +545,7 @@
    // Draw base Earth (ocean) as fallback
    ctx.fillStyle = '#1565C0'; // Deep blue for oceans
    ctx.beginPath();
-   ctx.arc(earth.x, earth.y, earth.r, 0, Math.PI * 2);
+   ctx.arc(earth.x, earth.y, earth.currentSize, 0, Math.PI * 2);
    ctx.fill();
    
    if (earthImageLoaded) {
@@ -506,13 +553,13 @@
        // Save the current context state
        ctx.save();
        
-       // Create a clipping path for the Earth circle
+       // Create a clipping path for the Earth circle with the dynamic size
        ctx.beginPath();
-       ctx.arc(earth.x, earth.y, earth.r, 0, Math.PI * 2);
+       ctx.arc(earth.x, earth.y, earth.currentSize, 0, Math.PI * 2);
        ctx.clip();
        
        // Calculate the position to draw the image
-       const size = earth.r * 2.5; // Make image larger to ensure full coverage
+       const size = earth.currentSize * 2.5; // Make image larger to ensure full coverage
        
        // Translate to earth center
        ctx.translate(earth.x, earth.y);
@@ -565,15 +612,15 @@
    const glowIntensity = 0.3 + seasonalFactor * 0.1; // Brighter in summer, dimmer in winter
    
    const glowGrad = ctx.createRadialGradient(
-     earth.x, earth.y, earth.r * 0.9,
-     earth.x, earth.y, earth.r * 1.1
+     earth.x, earth.y, earth.currentSize * 0.9,
+     earth.x, earth.y, earth.currentSize * 1.1
    );
    glowGrad.addColorStop(0, `rgba(255, 255, 255, ${glowIntensity})`);
    glowGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
    
    ctx.fillStyle = glowGrad;
    ctx.beginPath();
-   ctx.arc(earth.x, earth.y, earth.r * 1.1, 0, Math.PI * 2);
+   ctx.arc(earth.x, earth.y, earth.currentSize * 1.1, 0, Math.PI * 2);
    ctx.fill();
  }
  
@@ -586,34 +633,46 @@
    // Draw stars
    drawStars();
    
-   // Draw orbit path (only the main orbit, not the small ones around Earth)
+   // Draw orbit path
    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
    
    // Get current scroll offset for drawing the elliptical orbit
    const scrollY = window.scrollY || 0;
-   const parallaxFactor = 0.2;
+   const maxScroll = document.body.scrollHeight - window.innerHeight;
+   const scrollProgress = Math.min(1, scrollY / maxScroll);
    
    // Calculate ellipse parameters based on scroll
-   // Use the same eccentricity calculation as in updateEarthPosition
-   const baseEccentricity = 0.0167; // Earth's actual orbital eccentricity
-   const scrollEccentricity = Math.min(0.2, scrollY * parallaxFactor / earth.orbitRadius);
-   const eccentricity = baseEccentricity + scrollEccentricity;
-   const semiMajorAxis = earth.orbitRadius;
-   const semiMinorAxis = semiMajorAxis * Math.sqrt(1 - eccentricity * eccentricity);
+   const minEccentricity = 0.0167; // Earth's actual orbital eccentricity
+   const maxEccentricity = 0.7; // Maximum eccentricity when fully scrolled
+   const eccentricity = minEccentricity + (maxEccentricity - minEccentricity) * scrollProgress;
    
-   // Draw elliptical orbit
+   // Calculate inclination based on scroll (0 to 85 degrees)
+   const maxInclination = 85; // Increased from 20 to 85 for dramatic effect
+   const currentInclination = maxInclination * scrollProgress;
+   const inclinationRad = degToRad(currentInclination);
+   
+   // For vertical major axis, swap a and b
+   const semiMajorAxis = earth.orbitRadius; // Vertical axis
+   const semiMinorAxis = semiMajorAxis * Math.sqrt(1 - eccentricity * eccentricity); // Horizontal axis
+   
+   // Draw the elliptical orbit path point by point with inclination
    ctx.beginPath();
    
-   // Draw the elliptical orbit path point by point
    for (let angle = 0; angle < 360; angle += 5) {
      const angleRad = degToRad(angle);
-     const x = sun.x + semiMajorAxis * Math.cos(angleRad);
-     const y = sun.y + semiMinorAxis * Math.sin(angleRad);
+     
+     // Calculate position on ellipse
+     const x = semiMinorAxis * Math.cos(angleRad);
+     const y = semiMajorAxis * Math.sin(angleRad);
+     
+     // Apply inclination
+     const inclinedX = x;
+     const inclinedY = y * Math.cos(inclinationRad) + x * Math.sin(inclinationRad);
      
      if (angle === 0) {
-       ctx.moveTo(x, y);
+       ctx.moveTo(sun.x + inclinedX, sun.y + inclinedY);
      } else {
-       ctx.lineTo(x, y);
+       ctx.lineTo(sun.x + inclinedX, sun.y + inclinedY);
      }
    }
    
@@ -621,32 +680,33 @@
    ctx.closePath();
    ctx.stroke();
    
-   // Draw rays
+   // MODIFIED: Improved Earth-Sun drawing order with smoother transitions
+   if (earth.behindSun) {
+     // Draw Sun first if Earth is behind it
+     drawSun();
+     drawEarth();
+   } else {
+     // Draw Earth first if it's in front of the Sun
+     drawEarth();
+     drawSun();
+   }
+   
+   // Draw rays after both Earth and Sun to ensure they appear on top
    ctx.lineWidth = 1;
    for (const ray of rays) {
-     ctx.strokeStyle = ray.color;
+     // Make rays slightly transparent when they'd be behind Earth
+     if (earth.behindSun && lineCircleIntersection(ray.start, ray.dir, earth, earth.currentSize)) {
+       const dimmedOpacity = ray.baseOpacity * 0.5;
+       ctx.strokeStyle = ray.color.replace(/[\d.]+\)/, dimmedOpacity + ')');
+     } else {
+       ctx.strokeStyle = ray.color;
+     }
+     
      ctx.beginPath();
      ctx.moveTo(ray.start.x, ray.start.y);
      ctx.lineTo(ray.end.x, ray.end.y);
      ctx.stroke();
    }
-   
-   // Draw Earth with realistic image
-   drawEarth();
-   
-   // Draw Sun (yellow circle with gradient)
-   const sunGrad = ctx.createRadialGradient(
-     sun.x, sun.y, 0,
-     sun.x, sun.y, sun.r
-   );
-   sunGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-   sunGrad.addColorStop(0.2, 'rgba(255, 255, 0, 1)');
-   sunGrad.addColorStop(1, 'rgba(255, 165, 0, 0.8)');
-   
-   ctx.fillStyle = sunGrad;
-   ctx.beginPath();
-   ctx.arc(sun.x, sun.y, sun.r, 0, Math.PI * 2);
-   ctx.fill();
  }
  
  // Draw stars with flickering effect
@@ -883,15 +943,13 @@
    // Set up smooth scrolling
    setupSmoothScrolling();
    
-   // Add hover effect to navigation when it's faded
+   // Add hover effect to navigation when it's faded - modified to remove opacity changes
    mainNav.addEventListener('mouseenter', () => {
-     mainNav.style.opacity = '1';
+     // Navigation is always visible, so no need to change opacity
    });
    
    mainNav.addEventListener('mouseleave', () => {
-     if (window.scrollY < 20) {
-       mainNav.style.opacity = '0.2';
-     }
+     // Navigation is always visible, so no need to change opacity
    });
    
    // Add hover effect to controls when scrolled down
@@ -939,23 +997,106 @@
    }
  });
  
- // Scroll blur effect
+ // Scroll blur effect - modified to make it properly toggleable
+ let isBlurActive = false;
  let scrollTimeout;
+
  function handleScrollBlur() {
    // Show the blur effect
    scrollBlur.style.opacity = '1';
+   isBlurActive = true;
    
    // Clear any existing timeout
    clearTimeout(scrollTimeout);
-   
-   // Set a timeout to hide the blur effect after scrolling stops
-   scrollTimeout = setTimeout(() => {
-     scrollBlur.style.opacity = '0';
-   }, 800); // Fade out 800ms after scrolling stops
  }
- 
- // Add scroll event listener for blur effect
+
+ // UPDATED: Improve blur toggling to work with more elements
+ function toggleBlurEffect() {
+   if (isBlurActive) {
+     scrollBlur.style.opacity = '0';
+     isBlurActive = false;
+   } else {
+     scrollBlur.style.opacity = '1';
+     isBlurActive = true;
+   }
+ }
+
+ // Toggle blur effect when clicking on background
+ canvas.addEventListener('click', (e) => {
+   // Only toggle if we're clicking on the background, not on Earth or Sun
+   const clickX = e.clientX;
+   const clickY = e.clientY;
+   
+   // Calculate distance from Earth and Sun centers
+   const distanceFromEarth = Math.sqrt(Math.pow(clickX - earth.x, 2) + Math.pow(clickY - earth.y, 2));
+   const distanceFromSun = Math.sqrt(Math.pow(clickX - sun.x, 2) + Math.pow(clickY - sun.y, 2));
+   
+   // If we're not clicking on Earth or Sun, toggle blur
+   if (distanceFromEarth > earth.currentSize && distanceFromSun > sun.r) {
+     toggleBlurEffect();
+   }
+ });
+
+ // ADDED: Also toggle blur when clicking on navbar or speed display
+ if (mainNav) {
+   mainNav.addEventListener('click', (e) => {
+     // Prevent toggle when clicking on links
+     if (!e.target.closest('a')) {
+       toggleBlurEffect();
+     }
+   });
+ }
+
+ if (speedDisplay) {
+   speedDisplay.addEventListener('click', () => {
+     toggleBlurEffect();
+   });
+ }
+
+ // ADDED: Allow clicking anywhere on the document to toggle the blur
+ // This ensures the blur can be toggled no matter where the user clicks
+ document.addEventListener('click', (e) => {
+   // Only process clicks that are not on the canvas, Earth, Sun, or interactive elements
+   if (e.target !== canvas && 
+       !e.target.closest('#mainNav a') && 
+       !e.target.closest('.controls button') &&
+       !e.target.closest('#speedMultiplier')) {
+     toggleBlurEffect();
+   }
+ });
+
+ // Modify scroll listener to avoid hiding blur effect
  window.addEventListener('scroll', handleScrollBlur);
  
  // Initialize the scene
  initScene();
+
+// NEW: Extract Sun drawing to a separate function for better control over drawing order
+function drawSun() {
+  // Draw Sun (yellow circle with gradient)
+  const sunGrad = ctx.createRadialGradient(
+    sun.x, sun.y, 0,
+    sun.x, sun.y, sun.r
+  );
+  sunGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+  sunGrad.addColorStop(0.2, 'rgba(255, 255, 0, 1)');
+  sunGrad.addColorStop(1, 'rgba(255, 165, 0, 0.8)');
+  
+  ctx.fillStyle = sunGrad;
+  ctx.beginPath();
+  ctx.arc(sun.x, sun.y, sun.r, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Add a sun glow effect
+  const sunOuterGlow = ctx.createRadialGradient(
+    sun.x, sun.y, sun.r * 0.8,
+    sun.x, sun.y, sun.r * 1.5
+  );
+  sunOuterGlow.addColorStop(0, 'rgba(255, 165, 0, 0.4)');
+  sunOuterGlow.addColorStop(1, 'rgba(255, 165, 0, 0)');
+  
+  ctx.fillStyle = sunOuterGlow;
+  ctx.beginPath();
+  ctx.arc(sun.x, sun.y, sun.r * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+}
